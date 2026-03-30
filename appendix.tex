@@ -40,6 +40,45 @@ The out-of-distribution holdout from Human Domainome PF00018 and PF07525 familie
 Only single-point mutations were used for training; the complete dataset statistics and curation pipeline are summarized in Figure~\ref{fig:overview}c.
 
 \subsection{Implementing StableESM: LoRA-based Direct Preference Optimization of ESM2}\label{sec:stableesm_implementation}
+
+StableESM applies Low-Rank Adaptation (LoRA) to pretrained ESM-2 models, inserting trainable low-rank matrices into the feed-forward layers while keeping all original parameters frozen.
+We used LoRA rank $r = 32$, scaling factor $\alpha = 64$, and dropout $0.1$, targeting the \texttt{fc1} and \texttt{fc2} modules (the two linear layers in each transformer block's feed-forward network).
+No bias terms were added to the LoRA layers.
+This configuration was held constant across all model sizes (8M, 35M, 150M, 650M, and 3B parameters), enabling a controlled comparison of how preference alignment scales with model capacity.
+
+\paragraph{Reference model.}
+DPO requires a reference model to regularize the aligned model against degenerate solutions.
+We initialize the reference model as a deep copy of the full model (including LoRA parameters at initialization) and freeze all of its parameters.
+During training, forward passes through the reference model are performed under \texttt{torch.no\_grad()} to avoid unnecessary gradient computation and reduce memory overhead.
+
+\paragraph{Masked log-likelihood ratios.}
+Our DPO formulation operates on per-position log-likelihood ratios (LLRs) computed via masked prediction, following the zero-shot mutation scoring approach from ESM~\citep{meier2021language}.
+For a mutation at position $i$, we mask position $i$ in the input sequence and compute:
+\begin{equation}
+\pi(y \mid x) = \frac{p(x_i = \text{mut} \mid x_{\setminus i})}{p(x_i = \text{wt} \mid x_{\setminus i})}
+\end{equation}
+where $x_{\setminus i}$ denotes the sequence with position $i$ replaced by the \texttt{<mask>} token.
+Probabilities are obtained by applying a softmax over the full vocabulary at the masked position and indexing the specific wild-type and mutant amino acid tokens.
+The mutation position is offset by $+1$ during token indexing to account for the ESM-2 \texttt{<cls>} token prepended to all sequences.
+
+\paragraph{DPO loss.}
+Each training sample consists of a triplet $(x_{\text{wt}}, y_w, y_l)$: wild-type sequence, a stable (preferred) mutation, and an unstable (dispreferred) mutation from the same protein domain.
+The stable and unstable mutations may occur at different sequence positions.
+For each mutation, we compute the LLR under both the policy model $\pi_\theta$ and the frozen reference model $\pi_{\text{ref}}$.
+The DPO objective is:
+\begin{equation}
+\mathcal{L}_{\text{DPO}} = -\mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \left[ \log \sigma \left( \beta \log \frac{\pi_\theta(y_w \mid x)}{\pi_{\text{ref}}(y_w \mid x)} - \beta \log \frac{\pi_\theta(y_l \mid x)}{\pi_{\text{ref}}(y_l \mid x)} \right) \right]
+\end{equation}
+where $\beta = 0.8$ controls the strength of the KL divergence constraint against the reference model.
+This objective trains the model to increase the relative likelihood of stable mutations over unstable mutations, while the reference model term prevents the aligned model from diverging too far from the pretrained representations.
+
+\paragraph{Tokenization and masking.}
+Sequences are tokenized using the ESM-2 batch converter.
+Stop codons (\texttt{*}) are replaced with the \texttt{<eos>} token.
+All sequences are padded to a maximum length of 256 tokens.
+For each preference triplet, we construct seven tokenized variants: the unmasked wild-type, stable, and unstable sequences, plus four masked versions (wild-type masked at the stable mutation position, wild-type masked at the unstable mutation position, stable mutant masked at its mutation position, and unstable mutant masked at its mutation position).
+These masked sequences enable extraction of the amino acid probabilities needed for the LLR computation under both policy and reference models.
+
 \subsection{Training StableESM across model sizes using Direct Preference Optimization}\label{sec:dpo_training}
 \subsection{Zero-shot mutation effect prediction using log-likelihood ratio}\label{sec:llr_prediction}
 \subsection{Benchmarking StableESM on single mutations}\label{sec:single_mutation_benchmark}
