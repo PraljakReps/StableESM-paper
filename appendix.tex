@@ -80,6 +80,54 @@ For each preference triplet, we construct seven tokenized variants: the unmasked
 These masked sequences enable extraction of the amino acid probabilities needed for the LLR computation under both policy and reference models.
 
 \subsection{Training StableESM across model sizes using Direct Preference Optimization}\label{sec:dpo_training}
+
+We trained StableESM models at five scales using the ESM-2 family: 8M (\texttt{esm2\_t6\_8M\_UR50D}), 35M (\texttt{esm2\_t12\_35M\_UR50D}), 150M (\texttt{esm2\_t30\_150M\_UR50D}), 650M (\texttt{esm2\_t33\_650M\_UR50D}), and 3B (\texttt{esm2\_t36\_3B\_UR50D}).
+All models were trained on the same preference dataset (Section~\ref{sec:dataset_curation}) using the DPO objective described in Section~\ref{sec:stableesm_implementation}.
+
+\paragraph{Optimizer and learning rate schedule.}
+We used the Adam optimizer with a two-phase learning rate schedule implemented as a \texttt{SequentialLR} scheduler.
+The first phase applies a linear warmup from $0.1 \times \text{lr}$ to the peak learning rate over 1{,}000 steps.
+The second phase follows a cosine annealing schedule with period $T_{\max} = 100{,}000$ steps and minimum learning rate set to $0.01 \times \text{lr}$.
+The scheduler updates every step.
+
+\paragraph{Model-specific hyperparameters.}
+Learning rates were scaled inversely with model size to maintain training stability.
+Batch sizes and distributed training strategies were adjusted to fit GPU memory constraints.
+Table~\ref{tab:training_hyperparams} summarizes the training configuration for each model size.
+
+\begin{table}[h]
+\centering
+\caption{Training hyperparameters for StableESM models across scales.}
+\label{tab:training_hyperparams}
+\small
+\begin{tabular}{lccccc}
+\toprule
+ & \textbf{8M} & \textbf{35M} & \textbf{150M} & \textbf{650M} & \textbf{3B} \\
+\midrule
+Learning rate & $1 \times 10^{-6}$ & $5 \times 10^{-7}$ & $1 \times 10^{-7}$ & $5 \times 10^{-8}$ & $1 \times 10^{-8}$ \\
+Batch size & 32 & 32 & 8 & 8 & 4 \\
+Max steps & 8M & 4M & 4M & 4M & 4M \\
+Precision & bf16 & bf16 & bf16 & bf16 & bf16-mixed \\
+Strategy & DDP & DDP & DDP & DeepSpeed S2 & DeepSpeed S2 \\
+GPUs & 1 & 1 & 4 & 4 & 8 (2 nodes) \\
+$\beta$ (DPO) & 0.8 & 0.8 & 0.8 & 0.8 & 0.8 \\
+LoRA rank $r$ & 32 & 32 & 32 & 32 & 32 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Training infrastructure and precision.}
+All models were trained using PyTorch Lightning.
+Smaller models (8M, 35M) used Distributed Data Parallel (DDP) on a single GPU, while larger models used multi-GPU setups: 150M used DDP across 4 GPUs, 650M used DeepSpeed Stage 2 across 4 GPUs, and 3B used DeepSpeed Stage 2 across 8 GPUs on 2 nodes.
+Training used bfloat16 (bf16) mixed precision for memory efficiency on A100 GPUs.
+Validation was performed every 10{,}000 steps, computing Spearman correlation per protein domain averaged across all domains.
+Data loading used 4 workers per GPU.
+Gradient accumulation was not used (accumulation factor of 1).
+
+\paragraph{Monitoring convergence.}
+During training, we tracked the DPO loss, the probability that the model prefers the stable mutation over the unstable mutation ($P(\text{stable} > \text{unstable})$), and per-class accuracy (fraction of stable mutations assigned higher likelihood than wild-type, and fraction of unstable mutations assigned lower likelihood than wild-type).
+All model sizes showed smooth convergence with $P(\text{stable} > \text{unstable})$ increasing from the random baseline of 0.5 to approximately 0.70, with aligned training and validation trajectories indicating no overfitting (Figure~\ref{fig:train_eval_stableesm}a).
+
 \subsection{Zero-shot mutation effect prediction using log-likelihood ratio}\label{sec:llr_prediction}
 \subsection{Benchmarking StableESM on single mutations}\label{sec:single_mutation_benchmark}
 \subsection{Benchmarking StableESM on double mutations}\label{sec:double_mutation_benchmark}
