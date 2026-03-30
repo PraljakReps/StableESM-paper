@@ -18,6 +18,22 @@ To further assess catastrophic forgetting in a functional prediction setting, we
 We evaluated ESM, StableESM, and ESMTherm models with 8M, 35M, 150M, 650M, and 3B parameters. For each model, predicted fitness scores were compared against experimentally measured fitness values across ProteinGym protein mutant datasets. Performance was quantified using Spearman’s rank correlation coefficient (ρ), computed separately for each dataset.
 
 \subsection{Designing multicopper oxidase alleles and variants with StableESM}\label{sec:oxidase_design}
+To validate StableESM predictions, we experimentally tested designed mutations in laccase (CotA) from \textit{Bacillus subtilis} (UniProtKB accession P07788), a protein family not represented in the preference alignment dataset. We selected mutations based on StableESM predictions using the machine learning-directed evolution framework described in Algorithm~\ref{alg:ml_directed_evolution}, including overlap variants where both StableESM and ESM2 predict stabilizing effects and StableESM-specific predictions. Enzyme activity was assessed through ABTS oxidation assays at multiple temperatures (25$^\circ$C, 65$^\circ$C, and 85$^\circ$C). All experiments were performed in quadruplicate.
+
+For large-scale in silico design validation, we applied machine learning-directed evolution on multicopper oxidase (PDB: 1GSK), a 513 amino acid protein not represented in the preference alignment dataset. We evaluated three design strategies: (1) StableESM greedy sampling, selecting positions with highest predicted stabilizing effects; (2) StableESM unique sampling, targeting positions where StableESM predicts stabilizing mutations but ESM2 does not (LLR$_{\text{StableESM}} \geq 0$ and LLR$_{\text{ESM2}} < 0$); and (3) ESM2 greedy sampling as baseline. Thermal stability was evaluated using TempBERTura~\citep{rodella2024temberture}, and structural quality was assessed using ColabFold with mean pLDDT scores.
+
 \subsection{Predicting mutational effects with physics-based methods: Rosetta}\label{sec:rosetta_methods}
+
 \subsection{Experimental protocol for protein purification}\label{sec:protein_purification}
+
+\subsubsection{Cloning and preparing DNA constructs}
+Laccase (CotA) from \textit{Bacillus subtilis} (UniProtKB accession P07788) was codon-optimized for \textit{Escherichia coli}, synthesized as a gBlock (Twist Bioscience, South San Francisco, CA, USA), and cloned into pY71 vector using Gibson Assembly. Site-directed mutations (A296G, G270C, I368V, and T261F) were introduced using the Q5\textsuperscript{\textregistered} Site-Directed Mutagenesis Kit (NEB, E0554S) with pY71-Laccase as the template. All constructs were verified by DNA sequencing.
+
+\subsubsection{Cell-free expression and protein quantification}
+Cell-free expression (CFE) reactions were performed using the PUREfrex2.0 system at 30$^\circ$C for 20 hours, and the concentration of the expressed protein was determined by Bradford assay (ThermoFisher). Protein standards (0, 0.25, 0.5, 1, 1.5, 2 mg/mL) were prepared and used as the standard curve. The absorbance at 595 nm was measured after mixing 4 $\mu$L of protein standards with 200 $\mu$L of Bradford reagent and allowing it to react at room temperature for 20 min. The protein concentration in each CFE reaction was determined from the standard curve, using no DNA as a blank control. Each sample was measured in four replicates.
+
+\subsubsection{Copper activation and heat treatment}
+Since laccase is activated by copper, we added copper sulfate (CuSO$_4$) into the CFE reaction after 20 hours of incubation. Specifically, 5 mM of CuSO$_4$ was added to the CFE system to reach a final concentration of 400 $\mu$M and incubated at room temperature (25$^\circ$C) for 2 hours in a pH 5.5 buffer environment (50 mM PIPES, 20 mM NaCl). After copper activation, each laccase mutant was subjected to heat treatment at three temperatures (85$^\circ$C, 65$^\circ$C, 25$^\circ$C) for 10 minutes to assess thermostability.
+
 \subsection{Experimental protocol for activity assays}\label{sec:activity_assays}
+The multicopper oxidase activity was measured using a colorimetric assay of 2,2'-azino-bis(3-ethylbenzothiazoline-6-sulfonic acid) (ABTS) oxidation, which turns blue upon oxidation. Colorimetric assays were performed in a pH 5.5 buffer environment (50 mM PIPES, 20 mM NaCl) containing 4 mM ABTS. The absorbance at 420 nm was measured once per minute for 30 minutes. Each sample was measured in four replicates.

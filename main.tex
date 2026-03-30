@@ -293,6 +293,45 @@ The preservation of overall clinical prediction performance demonstrates that st
 
 \subsection{Designing thermostable multicopper oxidases with StableESM-guided directed evolution}
 
+To validate StableESM's predictive accuracy beyond computational benchmarks, we experimentally tested designed mutations in laccase (CotA) from \textit{Bacillus subtilis}, a multicopper oxidase family not represented in the preference alignment dataset.
+We selected mutations based on StableESM predictions using a machine learning-directed evolution framework (Algorithm~\ref{alg:ml_directed_evolution}, Methods~\ref{sec:oxidase_design}), comparing three design strategies: (1) overlap mutants where both StableESM and ESM2 predict stabilizing effects (LLR $\geq 0$ for both models), (2) StableESM-unique mutants where StableESM predicts stabilizing effects but ESM2 does not (LLR$_{\text{StableESM}} \geq 0$ and LLR$_{\text{ESM2}} < 0$), and (3) ESM2 greedy sampling as baseline.
+
+\subsubsection{Experimental validation of single-mutation predictions}
+
+Experimental enzyme activity assays confirmed StableESM's predictions, with designed mutants demonstrating enhanced thermostability across temperature conditions (Figure~\ref{fig:exp_validation}).
+Notably, overlap mutant T261F, predicted as stabilizing by both models (LLR $> 0$), maintained superior activity relative to wild-type at 65$^\circ$C and retained approximately 2-fold higher activity than wild-type even at the extreme condition of 85$^\circ$C.
+Critically, our results reveal that positive log-likelihood ratios from both StableESM and ESM2 are required to obtain thermally stable oxidases that maintain or improve catalytic activity at elevated temperatures.
+This finding suggests that ESM2's log-likelihood landscape captures functional constraints related to catalytic activity, while StableESM's aligned landscape is more specifically tuned to thermodynamic stability.
+Mutations predicted as stabilizing only by StableESM (LLR$_{\text{StableESM}} \geq 0$, LLR$_{\text{ESM2}} < 0$) may stabilize the protein fold but compromise catalytic function, consistent with the interpretation that these mutations fall in regions where stability gains come at the cost of disrupting functionally important interactions.
+The overlap between both models' positive predictions thus identifies a sweet spot in sequence space where mutations are both thermodynamically stabilizing and functionally permissive.
+
+These results validate that StableESM learns transferable stability principles that generalize to completely unseen protein families, and that combining StableESM with the base ESM2 model enables accurate prediction of functional improvements in distantly related proteins.
+A second round of single-mutation experiments is currently underway to further explore the overlap design strategy and identify additional thermostable variants with maintained or improved activity.
+
+\subsubsection{In silico design validation through machine learning-directed evolution}
+
+Additionally, we demonstrate StableESM's utility in large-scale protein design through machine learning-directed evolution on multicopper oxidase (PDB: 1GSK), a 513 amino acid protein not represented in any form within the preference alignment dataset (Methods~\ref{sec:oxidase_design}).
+Using TempBERTura~\citep{rodella2024temberture} for thermal stability evaluation, StableESM greedy design achieved the highest predicted $T_m$ of 74.2$^\circ$C with high confidence (0.978), representing a 15.4$^\circ$C improvement over the wild-type predicted $T_m$ of 58.8$^\circ$C.
+The StableESM unique sampling strategy achieved a predicted $T_m$ of 61.9$^\circ$C with even higher confidence (0.981), demonstrating that StableESM identifies stabilizing mutations missed by the base model.
+ESM2 greedy design reached a similar predicted $T_m$ of 73.7$^\circ$C but with substantially lower confidence (0.686), highlighting the value of preference alignment for confident predictions.
+
+Critically, StableESM and ESM2 greedy designs differed significantly from each other (86.2\% similarity, 71 mismatches) despite making similar numbers of edits ($N = 400$), demonstrating that preference alignment fundamentally alters sequence space exploration even for completely unseen proteins distant from the training data.
+Structural quality assessment using ColabFold confirmed that all stabilizing designs maintained high predicted structural integrity with mean pLDDT scores above 91 (Figure~\ref{fig:insilico_validation}).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/Figure_4.png}
+    \caption{\textbf{Experimental validation of StableESM mutant predictions.} \textbf{(a)} Machine learning-directed evolution framework using StableESM predictions to guide exploration of fitness landscapes. \textbf{(b)} Enzyme activity measurements for multicopper oxidase variants at elevated temperatures. Overlap mutant T261F, computationally predicted as stabilizing by both models, demonstrates enhanced thermostability with maintained activity at 65$^\circ$C and 2-fold improvement over wild-type at 85$^\circ$C, validating the accuracy of stability predictions.}
+    \label{fig:exp_validation}
+\end{figure}
+
+%\begin{figure}[H]
+%    \centering
+%    \includegraphics[width=\textwidth]{figures/Figure_5.png}
+%    \caption{\textbf{In silico validation of StableESM through thermostable protein design.} \textbf{(a)} In silico results comparing greedy vs. preference-aligned design strategies, showing StableESM identifies beneficial mutations achieving higher predicted melting temperatures and stability using TempBERTura. \textbf{(b)} Designed protein structures computationally predicted to possess improved thermostability across multiple variants, validating practical utility for experimental protein engineering.}
+%    \label{fig:insilico_validation}
+%\end{figure}
+
 
 \section{Discussion}
 \label{sec:discussion}
