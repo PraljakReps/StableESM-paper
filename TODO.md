@@ -36,12 +36,12 @@
 
 ## Appendix Methods Still Empty
 
-- [ ] `\subsection{Curating the Stable Mutate Preference Dataset}` — dataset curation details
-- [ ] `\subsection{Implementing StableESM: LoRA-based DPO of ESM2}` — LoRA config, hyperparameters
-- [ ] `\subsection{Training StableESM across model sizes using DPO}` — training details per scale
-- [ ] `\subsection{Zero-shot mutation effect prediction using log-likelihood ratio}` — LLR scoring method
-- [ ] `\subsection{Benchmarking StableESM on single mutations}` — evaluation protocol
-- [ ] `\subsection{Benchmarking StableESM on double mutations}` — evaluation protocol
+- [x] `\subsection{Curating the Stable Mutant Preference Dataset}` — dataset curation details
+- [x] `\subsection{Implementing StableESM: LoRA-based DPO of ESM2}` — LoRA config, DPO loss, masking
+- [x] `\subsection{Training StableESM across model sizes using DPO}` — hyperparameter table, optimizer, infrastructure
+- [x] `\subsection{Zero-shot mutation effect prediction using log-likelihood ratio}` — LLR scoring, multi-site, reference normalization
+- [x] `\subsection{Benchmarking StableESM on single mutations}` — 4-tier evaluation protocol
+- [x] `\subsection{Benchmarking StableESM on double mutations}` — MegaScale double mutants, simultaneous masking
 - [ ] `\subsection{Testing catastrophic forgetting on clinical variant prediction}` — clinical benchmark details (datasets, metrics, evaluation protocol)
 - [ ] `\subsection{Predicting mutational effects with physics-based methods: Rosetta}` — Rosetta protocol
 
