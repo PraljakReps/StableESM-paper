@@ -1,0 +1,23 @@
+\section{Methods}
+\subsection{Curating the Stable Mutate Preference Dataset}\label{sec:dataset_curation}
+\subsection{Implementing StableESM: LoRA-based Direct Preference Optimization of ESM2}\label{sec:stableesm_implementation}
+\subsection{Training StableESM across model sizes using Direct Preference Optimization}\label{sec:dpo_training}
+\subsection{Zero-shot mutation effect prediction using log-likelihood ratio}\label{sec:llr_prediction}
+\subsection{Benchmarking StableESM on single mutations}\label{sec:single_mutation_benchmark}
+\subsection{Benchmarking StableESM on double mutations}\label{sec:double_mutation_benchmark}
+\subsection{Benchmarking StableESM on disorder region prediction}\label{sec:disorder_prediction}
+\subsection{Testing catastrophic forgetting on structure prediction}\label{sec:structure_forgetting}
+To assess whether StableESM exhibits catastrophic forgetting of structural information relative to ESM, we evaluated its learned representations using the structure module of ESMFold. Specifically, embeddings and attention maps extracted from StableESM were passed directly into the ESMFold structure module trained for 270k update steps, following the evaluation protocol used in the original ESMFold study. We evaluated models with 8M, 35M, 150M, 650M, and 3B parameters. For each model size, embeddings and attention tensors were extracted consistently with the representations used in the original ESMFold. These representations were provided as input to the ESMFold structure module, which was kept frozen throughout all experiments. No recycling steps were performed during structure prediction. Structural predictions were generated for protein targets from the CAMEO, CASP14, CASP15, and CASP16 benchmark datasets. Model performance was quantified using average per sequence pLDDT scores. 
+
+To compare StableESM against conventional finetuning with a task-specific predictor head, we additionally evaluated representations from ESMTherm models. ESMTherm models were trained using the original ESMTherm training code and datasets and employ supervised finetuning with an explicit stability predictor head. We evaluated ESMTherm models with matching parameter sizes and extracted embeddings and attention tensors from the same attentions and representations as done for ESM and StableESM. This enabled a controlled comparison of how DPO-based optimization versus predictor head finetuning affects retention of structural signal in learned representations.
+
+\subsection{Testing catastrophic forgetting on clinical variant prediction}\label{sec:clinical_forgetting}
+\subsection{Testing catastrophic forgetting on ProteinGym benchmarks}\label{sec:proteingym_forgetting}
+To further assess catastrophic forgetting in a functional prediction setting, we benchmarked StableESM representations on protein fitness prediction using the ProteinGym benchmark. Following the methodology introduced in ESM, fitness scores were computed using a log-likelihood ratio (LLR)–based metric derived from masked language modeling probabilities.
+
+We evaluated ESM, StableESM, and ESMTherm models with 8M, 35M, 150M, 650M, and 3B parameters. For each model, predicted fitness scores were compared against experimentally measured fitness values across ProteinGym protein mutant datasets. Performance was quantified using Spearman’s rank correlation coefficient (ρ), computed separately for each dataset.
+
+\subsection{Designing multicopper oxidase alleles and variants with StableESM}\label{sec:oxidase_design}
+\subsection{Predicting mutational effects with physics-based methods: Rosetta}\label{sec:rosetta_methods}
+\subsection{Experimental protocol for protein purification}\label{sec:protein_purification}
+\subsection{Experimental protocol for activity assays}\label{sec:activity_assays}
