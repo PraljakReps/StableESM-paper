@@ -291,6 +291,30 @@ The preservation of overall clinical prediction performance demonstrates that st
 
 \subsection{Transfer to unrelated protein tasks: disorder region and solubility prediction}
 
+A key question is whether stability-aligned representations transfer to protein properties beyond mutation effect prediction. To test this, we evaluated StableESM on two tasks entirely unrelated to the stability alignment objective: per-residue disorder region prediction and sequence-level solubility classification. Neither task was targeted during DPO training, making any improvements a direct indicator that preference alignment produces more generally informative protein representations.
+
+\subsubsection{Disorder region prediction}
+
+We benchmarked StableESM representations on the CAID (Critical Assessment of Intrinsic Disorder) benchmark using a linear probing setup: a single trainable linear layer on top of frozen backbone representations (Methods~\ref{sec:disorder_prediction}). This setup isolates the quality of learned representations by controlling for model capacity—the same linear head architecture, training data, and hyperparameters are used across all backbones.
+
+StableESM consistently outperforms ESM2 across all model sizes (8M to 650M parameters) on mean F1 score across CAID benchmark proteins (Figure~\ref{fig:disorder_solubility}a). Both models substantially outperform the ESM$_{Therm}$ baseline (mean F1 = XXX) and the one-hot encoding control (mean F1 = XXX), confirming that the improvements stem from learned representations rather than trivial sequence features. At 650M parameters, StableESM achieves a mean F1 of XXX compared to ESM2's XXX, with XXX\% of individual CAID domains showing improved or equal F1 scores (Figure~\ref{fig:disorder_solubility}b).
+
+The improvement on disorder prediction is particularly notable because intrinsically disordered regions are defined by their lack of stable tertiary structure—the opposite of what the stability alignment objective directly targets. This suggests that DPO alignment teaches the model more nuanced representations of sequence-structure relationships, including the ability to distinguish ordered from disordered regions, rather than simply biasing all predictions toward stability.
+
+\subsubsection{Solubility prediction}
+
+We similarly evaluated StableESM on binary solubility classification using a linear probe with mean pooling over frozen per-residue representations (Methods~\ref{sec:disorder_prediction}). StableESM representations yield improved solubility classification performance compared to ESM2 across model sizes, with StableESM-650M achieving an AUROC of XXX compared to ESM2-650M's XXX (Figure~\ref{fig:disorder_solubility}c). As with disorder prediction, ESM$_{Therm}$ representations show degraded performance relative to the base ESM2 model, further demonstrating that supervised fine-tuning compromises general representation quality while DPO preserves and enhances it.
+
+The transfer to both disorder and solubility prediction reinforces a consistent pattern throughout our results: DPO-based alignment produces representations that capture fundamental principles of protein biophysics rather than narrowly optimizing for the training objective. This emergent generalization stands in contrast to ESM$_{Therm}$, where supervised fine-tuning on the same stability data leads to representations that are worse than the base model on nearly every task outside the specific training objective.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figures/Figure_X_disorder_solubility.png}
+    \caption{\textbf{StableESM representations transfer to unrelated protein prediction tasks.} \textbf{(a)} Mean F1 scores for per-residue disorder region prediction on the CAID benchmark across model sizes. StableESM (red) consistently outperforms ESM2 (black) and baselines (ESM$_{Therm}$, one-hot) using identical linear probe architecture and training procedure. \textbf{(b)} Per-domain F1 score comparison between StableESM and ESM2 at 650M parameters, with points above the diagonal indicating domains where StableESM provides improved disorder prediction. \textbf{(c)} Solubility classification performance (AUROC) across model sizes, demonstrating that stability-aligned representations also improve sequence-level property prediction. All evaluations use frozen backbone representations with a single trainable linear layer to isolate representation quality.}
+    \label{fig:disorder_solubility}
+\end{figure}
+
+
 \subsection{Designing thermostable multicopper oxidases with StableESM-guided directed evolution}
 
 To validate StableESM's predictive accuracy beyond computational benchmarks, we experimentally tested designed mutations in laccase (CotA) from \textit{Bacillus subtilis}, a multicopper oxidase family not represented in the preference alignment dataset.
