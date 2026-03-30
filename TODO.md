@@ -10,11 +10,11 @@
 
 ## Sections to Write
 
-- [ ] **Discussion** (`main.tex` ~line 356) — empty
-- [ ] **Code and Data Availability** (`main.tex`) — empty
-- [ ] **Acknowledgments** (`main.tex`) — empty
-- [ ] **Author Contributions** (`main.tex`) — empty
-- [ ] **Competing Interests** (`main.tex`) — empty
+- [ ] **Discussion** (`main.tex`) — draft written, needs review: check tone, verify all claims match results, ensure limitations are fair
+- [ ] **Code and Data Availability** (`main.tex`) — draft written, needs review: verify Google Drive links work, confirm repo is public before submission
+- [ ] **Acknowledgments** (`main.tex`) — still empty, needs: funding/grant numbers, compute resources (cluster name), any non-author contributors to thank
+- [ ] **Author Contributions** (`main.tex`) — still empty, needs author list finalized and CRediT-style contributions
+- [ ] **Competing Interests** (`main.tex`) — draft written ("no competing interests"), double-check with all authors before submission
 
 ## Sections Needing Revision
 

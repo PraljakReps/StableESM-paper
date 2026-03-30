@@ -360,8 +360,57 @@ Structural quality assessment using ColabFold confirmed that all stabilizing des
 \section{Discussion}
 \label{sec:discussion}
 
+StableESM establishes that preference optimization with experimental stability data can fundamentally improve how protein language models predict mutation effects, generalize to unseen proteins, and explore fitness landscapes for protein design.
+The approach addresses multiple limitations of current protein language models simultaneously: performance improvements are consistent across all model sizes from 8M to 3B parameters, generalization extends to completely novel protein families and sequence lengths far beyond the training distribution, and critically, the alignment procedure avoids catastrophic forgetting across structure prediction, clinical variant assessment, and functional prediction benchmarks.
+
+A central finding is that preference alignment restores scaling laws for mutation effect prediction in protein language models.
+While vanilla ESM2 performance saturates or deteriorates from 650M to 3B parameters on out-of-distribution benchmarks—consistent with reports that larger models overfit to phylogenetic noise rather than functional constraints~\citep{weinstein2022non,hou2025understanding}—StableESM shows continued improvement with scale.
+This suggests that larger protein language models possess latent capabilities for understanding protein stability and function that are not accessed through masked language modeling alone but can be unlocked through targeted post-training alignment.
+The $\sim$1 million preference pairs used here represent a tiny fraction of the data used during pretraining, yet they fundamentally alter model behavior, paralleling the observation in natural language processing that relatively small alignment datasets can redirect large pretrained models toward substantially improved task performance~\citep{ouyang2022training}.
+
+The contrast between DPO-based alignment and supervised fine-tuning reveals why the choice of post-training objective matters.
+ESM$_{Therm}$, trained with a regression head on the same stability data, achieves competitive performance on its specific training task but catastrophically degrades on structure prediction, clinical variant assessment, and all ProteinGym functional categories when evaluated through log-likelihood ratios.
+This pattern aligns with recent findings in natural language processing that supervised fine-tuning tends to memorize training data patterns while reinforcement learning approaches learn generalizable principles~\citep{chu2025sft}.
+DPO's inherent regularization—constraining the aligned model to remain close to the reference model through the KL divergence penalty in the objective—appears essential for preserving the rich evolutionary representations learned during pretraining while selectively enhancing the model's sensitivity to stability-relevant features.
+
+The emergent transfer of stability alignment to unrelated tasks provides evidence that DPO produces more generally informative protein representations rather than narrowly optimizing for stability prediction.
+StableESM improves performance on disorder region prediction, solubility classification, expression prediction, and binding prediction—none of which were targeted during training.
+This transfer is particularly striking for disorder prediction, where intrinsically disordered regions are defined by their lack of stable structure.
+The improvement suggests that preference alignment teaches the model to better distinguish between ordered and disordered sequence contexts as part of learning a more refined understanding of sequence-structure-stability relationships.
+
+Our experimental validation in multicopper oxidase engineering reveals a practical framework for using aligned and unaligned models in combination for protein design.
+The key finding that positive log-likelihood ratios from both StableESM and ESM2 are required to identify mutations that are both thermally stabilizing and catalytically active has direct implications for how these models should be deployed.
+ESM2's log-likelihood landscape appears to capture functional constraints related to catalytic activity—reflecting the evolutionary pressures encoded during pretraining—while StableESM's aligned landscape is more specifically tuned to thermodynamic stability.
+Mutations where only StableESM predicts stabilizing effects (LLR$_{\text{StableESM}} \geq 0$, LLR$_{\text{ESM2}} < 0$) may stabilize the protein fold but disrupt functionally important interactions, while the overlap region identifies mutations that satisfy both stability and functional constraints simultaneously.
+This complementary relationship between aligned and base models suggests that post-training alignment does not simply replace the base model's knowledge but adds a distinct and complementary perspective on sequence-function relationships.
+
+The 86.2\% sequence similarity between StableESM and ESM2 greedy designs—despite comparable numbers of edits—demonstrates that preference alignment fundamentally alters how models navigate sequence space.
+This landscape alteration has practical implications: aligned models identify beneficial mutations and design strategies that would be entirely missed by unaligned approaches.
+The experimental confirmation that designed variants maintain or exceed wild-type activity across normal (25$^\circ$C), thermophilic (65$^\circ$C), and extremophilic (85$^\circ$C) temperature conditions validates that these computational predictions translate to measurable functional improvements in proteins completely absent from the training data.
+
+Several limitations of our current approach warrant discussion.
+First, our preference dataset is constructed exclusively from stability measurements ($\Delta\Delta G$ and $\Delta T_m$), which may introduce biases toward stability-related features at the expense of other functional properties.
+The observed improvements on non-stability tasks suggest this concern is partially mitigated by DPO's regularization, but multi-objective alignment incorporating diverse functional measurements could produce even more broadly capable models.
+Second, while we demonstrate generalization to unseen protein families and lengths substantially beyond training, the degree of generalization likely depends on the diversity and coverage of the preference dataset—expanding to more diverse protein architectures and fold types may further extend generalization capabilities.
+Third, our experimental validation is currently limited to single-mutation effects in a single protein system; broader experimental campaigns across multiple protein families and combinatorial mutations would strengthen the evidence for practical utility.
+
+Future work should explore several directions.
+Extending preference alignment to incorporate experimental measurements of activity, binding affinity, solubility, and expression level could enable multi-objective protein optimization.
+The overlap mutant strategy—requiring agreement between aligned and base models—could be generalized to combinations of models aligned to different properties, providing a principled approach to multi-property protein design.
+Investigating preference learning objectives that explicitly capture epistatic interactions through higher-order mutational data could improve predictions for combinatorial protein engineering.
+As experimental datasets continue to grow through initiatives like deep mutational scanning atlases~\citep{fowler2023atlas}, preference-based alignment may become a standard component of protein foundation model development, enabling models that not only understand evolutionary patterns but can effectively navigate fitness landscapes for practical protein design.
+
 \section{Code and Data Availability}
 \label{sec:code_data}
+
+All code for training StableESM, running inference, evaluating on benchmarks, and reproducing downstream task experiments (disorder prediction, solubility prediction, forward evolution) is available at \url{https://github.com/PraljakReps/StableESM} under the MIT license.
+The repository includes configuration files, SLURM scripts for multi-GPU training, and all 39 analysis notebooks used to generate the figures and results in this paper.
+
+Pre-trained StableESM checkpoints (8M, 35M, 150M, 650M, and 3B parameters) and trained downstream linear probe checkpoints for disorder and solubility prediction are available for download via Google Drive (see \texttt{checkpoints/README.md} in the code repository).
+The curated preference dataset containing $\sim$1 million mutations across 1,154 protein domains, along with all evaluation datasets (ProteinGym, CAID disorder benchmark, solubility classification, and out-of-distribution FireProt data), can be downloaded using the automated script provided in the repository (\texttt{python download\_data.py --all}) or manually from Google Drive (see \texttt{data/README.md}).
+
+The raw experimental databases used to construct the preference dataset are publicly available: MegaScale~\citep{tsuboyama2023mega}, Human Domainome 1~\citep{beltran2025site}, and FireProtDB~\citep{stourac2021fireprotdb}.
+Data curation notebooks documenting the full preprocessing pipeline are included in \texttt{notebooks/data\_curation/}.
 
 \section{Acknowledgments}
 \label{sec:acknowledgements}
@@ -372,6 +421,7 @@ Structural quality assessment using ColabFold confirmed that all stabilizing des
 \section{Competing Interests}
 \label{sec:competing_interests}
 
+The authors declare no competing interests.
 
 \bibliographystyle{plainnat}
 \bibliography{biblio}
