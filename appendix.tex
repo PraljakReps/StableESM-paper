@@ -184,6 +184,28 @@ ESM$_{\text{Therm}}$ models were trained using the original ESM$_{\text{Therm}}$
 For ESM$_{\text{Therm}}$, mutation effect scores were computed using the standard masked marginal LLR from \citet{meier2021language} (without reference normalization), since these models do not use a reference model framework.
 
 \subsection{Benchmarking StableESM on double mutations}\label{sec:double_mutation_benchmark}
+
+To test whether preference alignment on single mutations transfers to higher-order mutational effects, we evaluated StableESM on double mutation stability prediction using MegaScale data.
+
+\paragraph{Dataset.}
+Double mutations were identified in the MegaScale dataset by the presence of colon-delimited mutation specifications (\eg \texttt{D1A:K2R}) and separated from the single-mutation training data during curation.
+The double mutation benchmark comprises 190 unique protein domains, each with experimental $\Delta G$ measurements for multiple double mutants.
+These proteins were not used for DPO training, which included only single-point mutations.
+
+\paragraph{Scoring.}
+Double mutations were scored using simultaneous masking: both mutation positions were masked at once, and log-softmax probabilities were extracted at each masked position independently.
+The total LLR for a double mutant at positions $i$ and $j$ is the sum of per-position contributions:
+\begin{equation}
+\text{LLR}_{\text{double}} = \text{LLR}(i) + \text{LLR}(j)
+\end{equation}
+where each $\text{LLR}(k)$ is the reference-normalized log-likelihood ratio (Equation~\ref{eq:llr_inference}) computed at position $k$ with both mutation positions masked.
+This assumes approximate additivity of mutational effects while providing each position with the same masked context.
+
+\paragraph{Evaluation.}
+For each of the 190 proteins, we computed the Spearman rank correlation between predicted LLR scores and experimental $\Delta G$ values.
+Performance was assessed by comparing the distributions of per-protein Spearman correlations between StableESM and ESM-2, using the Kolmogorov--Smirnov test for statistical significance and Cohen's $d$ for effect size.
+All five model sizes (8M, 35M, 150M, 650M, 3B) were evaluated.
+
 \subsection{Benchmarking StableESM on disorder region prediction}\label{sec:disorder_prediction}
 To evaluate whether stability-aligned representations transfer to unrelated protein properties, we benchmarked StableESM on per-residue disorder region prediction using the CAID (Critical Assessment of Intrinsic Disorder) benchmark. We trained on the DisProt training set and evaluated on CAID test proteins (584 proteins). For each backbone (StableESM, ESM2, ESM$_{Therm}$, one-hot encoding, and random initialization), we froze the backbone representations and trained a single linear layer ($\text{Linear}(d_{\text{hidden}}, 1)$) applied per residue to predict disorder probability. Training used binary cross-entropy loss with attention masking to ignore padding tokens, a learning rate of $1 \times 10^{-4}$, batch size of 32, maximum sequence length of 1024, and mixed precision (FP16) training for up to 1000 epochs. Performance was quantified using per-protein F1 score, accuracy, precision, and recall, aggregated across all CAID benchmark proteins.
 
