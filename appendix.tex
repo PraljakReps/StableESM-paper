@@ -129,6 +129,33 @@ During training, we tracked the DPO loss, the probability that the model prefers
 All model sizes showed smooth convergence with $P(\text{stable} > \text{unstable})$ increasing from the random baseline of 0.5 to approximately 0.70, with aligned training and validation trajectories indicating no overfitting (Figure~\ref{fig:train_eval_stableesm}a).
 
 \subsection{Zero-shot mutation effect prediction using log-likelihood ratio}\label{sec:llr_prediction}
+
+StableESM predicts mutational effects at inference time using a reference-normalized log-likelihood ratio (LLR) that requires no task-specific prediction head.
+For a single mutation at position $i$ that substitutes wild-type amino acid $a_{\text{wt}}$ with mutant amino acid $a_{\text{mut}}$, the score is:
+\begin{equation}\label{eq:llr_inference}
+\text{LLR}(i) = \log \frac{p_\theta(a_{\text{mut}} \mid x_{\setminus i})}{p_\theta(a_{\text{wt}} \mid x_{\setminus i})} - \log \frac{p_{\text{ref}}(a_{\text{mut}} \mid x_{\setminus i})}{p_{\text{ref}}(a_{\text{wt}} \mid x_{\setminus i})}
+\end{equation}
+where $p_\theta$ is the aligned StableESM model, $p_{\text{ref}}$ is the frozen ESM-2 reference model, and $x_{\setminus i}$ denotes the sequence with position $i$ replaced by the \texttt{<mask>} token.
+The first term captures how much the aligned model favors the mutation; the second term subtracts the base model's evolutionary prior, isolating the effect of preference alignment.
+
+\paragraph{Scoring procedure.}
+For each mutation, we perform four masked forward passes: the wild-type and mutant sequences are each passed through both the policy and reference models with the mutation position masked.
+At the masked position, we apply a softmax over the full vocabulary and extract the probabilities for the wild-type and mutant amino acid tokens.
+These four probabilities are combined via Equation~\ref{eq:llr_inference} to produce the final score.
+A positive LLR indicates a predicted stabilizing mutation; a negative LLR indicates a destabilizing one.
+
+\paragraph{Multi-site mutations.}
+For mutations at multiple positions (\eg double mutants), we use a marginal scoring approach that sums the individual per-position LLR contributions:
+\begin{equation}
+\text{LLR}_{\text{multi}} = \sum_{j} \text{LLR}(j)
+\end{equation}
+where each position $j$ is independently masked and scored.
+This assumes additivity of mutational effects---each position is scored with the other positions unmasked, providing the native sequence context at all non-mutated sites.
+
+\paragraph{Comparison to vanilla ESM-2 scoring.}
+For the base ESM-2 model (without preference alignment), the standard masked marginal scoring from \citet{meier2021language} computes $\text{LLR}_{\text{ESM2}} = \log p(a_{\text{mut}} \mid x_{\setminus i}) - \log p(a_{\text{wt}} \mid x_{\setminus i})$ using only the pretrained model.
+StableESM's reference-normalized formulation (Equation~\ref{eq:llr_inference}) can be interpreted as measuring the \textit{change} in mutational preference induced by stability alignment, on top of the evolutionary baseline captured by the reference model.
+
 \subsection{Benchmarking StableESM on single mutations}\label{sec:single_mutation_benchmark}
 \subsection{Benchmarking StableESM on double mutations}\label{sec:double_mutation_benchmark}
 \subsection{Benchmarking StableESM on disorder region prediction}\label{sec:disorder_prediction}
