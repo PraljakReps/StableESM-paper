@@ -36,20 +36,20 @@
 
 ## Appendix Methods Still Empty
 
+- [ ] `\subsection{Predicting mutational effects with physics-based methods: Rosetta}` — Rosetta protocol
+
+## Appendix Methods Complete
+
 - [x] `\subsection{Curating the Stable Mutant Preference Dataset}` — dataset curation details
 - [x] `\subsection{Implementing StableESM: LoRA-based DPO of ESM2}` — LoRA config, DPO loss, masking
 - [x] `\subsection{Training StableESM across model sizes using DPO}` — hyperparameter table, optimizer, infrastructure
 - [x] `\subsection{Zero-shot mutation effect prediction using log-likelihood ratio}` — LLR scoring, multi-site, reference normalization
 - [x] `\subsection{Benchmarking StableESM on single mutations}` — 4-tier evaluation protocol
 - [x] `\subsection{Benchmarking StableESM on double mutations}` — MegaScale double mutants, simultaneous masking
-- [x] `\subsection{Testing catastrophic forgetting on clinical variant prediction}` — ProteinGym clinical benchmark, ClinVar variants, AUC/F1
-- [ ] `\subsection{Predicting mutational effects with physics-based methods: Rosetta}` — Rosetta protocol
-
-## Appendix Methods Already Written
-
-- [x] `\subsection{Benchmarking StableESM on disorder region prediction}` — CAID benchmark, linear probe, solubility
+- [x] `\subsection{Benchmarking StableESM on disorder region and solubility prediction}` — linear probing framework, CAID benchmark, solubility classification
 - [x] `\subsection{Testing catastrophic forgetting on structure prediction}` — ESMFold structure module, CAMEO/CASP14-16
-- [x] `\subsection{Testing catastrophic forgetting on ProteinGym benchmarks}` — LLR-based fitness, Spearman correlation
+- [x] `\subsection{Testing catastrophic forgetting on clinical variant prediction}` — ProteinGym clinical benchmark, ClinVar variants, AUC/F1
+- [x] `\subsection{Testing catastrophic forgetting on ProteinGym benchmarks}` — LLR-based fitness, 5 functional categories, Spearman correlation
 - [x] `\subsection{Designing multicopper oxidase alleles and variants with StableESM}` — ML-directed evolution, design strategies
 - [x] `\subsection{Experimental protocol for protein purification}` — cloning, CFE, copper activation
 - [x] `\subsection{Experimental protocol for activity assays}` — ABTS oxidation assay
@@ -57,7 +57,7 @@
 ## Main Text Sections Already Written
 
 - [x] Introduction
-- [x] Large-scale modeling of mutational preferences using pLMs and DPO
+- [x] Large-scale modeling of mutational preferences using pLMs and DPO (includes DPO equation tcolorbox)
 - [x] Training StableESM with DPO (~1M variants)
 - [x] Generalization to unseen single mutants, homologs, and families
 - [x] SH3 domain case study (needs XXX values filled in)
