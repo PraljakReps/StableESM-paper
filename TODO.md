@@ -42,7 +42,7 @@
 - [x] `\subsection{Zero-shot mutation effect prediction using log-likelihood ratio}` — LLR scoring, multi-site, reference normalization
 - [x] `\subsection{Benchmarking StableESM on single mutations}` — 4-tier evaluation protocol
 - [x] `\subsection{Benchmarking StableESM on double mutations}` — MegaScale double mutants, simultaneous masking
-- [ ] `\subsection{Testing catastrophic forgetting on clinical variant prediction}` — clinical benchmark details (datasets, metrics, evaluation protocol)
+- [x] `\subsection{Testing catastrophic forgetting on clinical variant prediction}` — ProteinGym clinical benchmark, ClinVar variants, AUC/F1
 - [ ] `\subsection{Predicting mutational effects with physics-based methods: Rosetta}` — Rosetta protocol
 
 ## Appendix Methods Already Written
