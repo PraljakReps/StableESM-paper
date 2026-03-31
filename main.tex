@@ -59,6 +59,7 @@
 
 %\usepackage{xcolor} % Make sure you have this package!
 \usepackage{graphicx}
+\usepackage[most]{tcolorbox}
 
 \definecolor{mygray}{gray}{0.95}
 \newcommand{\graybox}[1]{%
@@ -136,6 +137,21 @@ We curated a comprehensive preference dataset by combining three major experimen
 The scale and diversity of this dataset represents a significant advance over previous protein alignment efforts. [Extended Figure X] demonstrates that our preference dataset spans a broad range of protein domain lengths (median: X residues), encompasses diverse sequence space as measured by ESM2 embeddings, and covers all major amino acid substitution types with balanced representation across stability categories. Notably, the dataset includes an average of X preference pairs per domain, ensuring sufficient signal for robust alignment across protein families.
 
 We implemented StableESM using Low-Rank Adaptation (LoRA) applied to the pretrained ESM2 models, enabling efficient fine-tuning while preserving the original model weights (Methods \ref{sec:stableesm_implementation}). This approach allows us to adapt models across multiple scales (8M to 3B parameters) for preference optimization without the computational cost of full fine-tuning, while maintaining the rich evolutionary representations learned during pretraining. We applied Direct Preference Optimization (DPO) to train StableESM models, fundamentally shifting the training objective from masked language modeling to preference-based optimization (Figure~\ref{fig:intro_stableESM}d), Methods \ref{sec:dpo_training}). Unlike the vanilla ESM2 models trained to predict masked amino acids from evolutionary sequences, StableESM models learn to assign higher likelihood to experimentally stable mutations compared to unstable ones from the same protein context.
+
+\begin{tcolorbox}[
+  title=StableESM: Direct Preference Optimization Loss,
+  colback=white,
+  colframe=black!50,
+  coltitle=black,
+  colbacktitle=black!10,
+  fonttitle=\bfseries
+]
+Our approach leverages log-likelihood ratios computed by masking mutation positions and calculating $\pi(y \mid x) = \frac{p(x_i = \text{mut} \mid x_{\setminus i})}{p(x_i = \text{wt} \mid x_{\setminus i})}$, where $x_{\setminus i}$ represents the sequence with position $i$ masked. Each preference pair consists of stable ($y_w$) and unstable ($y_l$) mutations from the same protein domain, but not necessarily the same sequence position. The DPO objective shifts training from masked language modeling to preference-based optimization:
+\begin{equation}
+\mathcal{L}_{\text{DPO}} = -\mathbb{E}_{(x, y_w, y_l) \sim \mathcal{D}} \left[ \log \sigma \left( \beta \log \frac{\pi_\theta(y_w \mid x)}{\pi_{\text{ref}}(y_w \mid x)} - \beta \log \frac{\pi_\theta(y_l \mid x)}{\pi_{\text{ref}}(y_l \mid x)} \right) \right]
+\end{equation}
+where $\pi_{\text{ref}}$ is the frozen ESM2 reference model, $\pi_\theta$ is the aligned model's log-likelihood ratios computed via the masking procedure, and $\beta$ controls the KL divergence constraint against the reference model (Methods~\ref{sec:stableesm_implementation},~\ref{sec:dpo_training}).
+\end{tcolorbox}
 
 The experimental preference signal provides a more direct supervision than evolutionary data alone, potentially enabling models to overcome the phylogenetic noise limitations identified in previous scaling studies. By training across model sizes from 8M to 3B parameters using identical preference datasets and optimization procedures, we can systematically investigate whether preference alignment unlocks improved scaling laws for mutation effect prediction in protein language models.
 
