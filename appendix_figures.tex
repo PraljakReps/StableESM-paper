@@ -1,36 +1,36 @@
 \section{Additional Algorithms, Figures, \& Tables}
 \label{sec:additional_figures_tables}
 
-\begin{algorithm}[h!]
+\begin{algorithm2e}[h!]
 \caption{Machine Learning-Based Directed Evolution with StableESM}
 \label{alg:ml_directed_evolution}
-\begin{algorithmic}[1]
-\Require Wild-type sequence $x_{wt}$, StableESM model $\pi_\theta$, base ESM2 model $\pi_{ref}$, number of edits $N$, sampling strategy $S$
-\Ensure Designed protein sequence $x_{final}$
-\State $x_{current} \leftarrow x_{wt}$
-\For{$round = 1$ to $N$}
-    \For{$i = 1$ to $|x_{current}|$}
-        \State Mask position $i$ in $x_{current}$ to get $x_{\setminus i}$
-        \For{each amino acid $a \neq x_{current}[i]$}
-            \State $\text{LLR}^{\text{StableESM}}_{i,a} \leftarrow \log \frac{p_\theta(a \mid x_{\setminus i})}{p_\theta(x_{current}[i] \mid x_{\setminus i})}$
-            \State $\text{LLR}^{\text{ESM2}}_{i,a} \leftarrow \log \frac{p_{ref}(a \mid x_{\setminus i})}{p_{ref}(x_{current}[i] \mid x_{\setminus i})}$
-        \EndFor
-        \State $\text{LLR}^{\text{StableESM}}_i \leftarrow \max_a \text{LLR}^{\text{StableESM}}_{i,a}$
-        \State $\text{LLR}^{\text{ESM2}}_i \leftarrow \max_a \text{LLR}^{\text{ESM2}}_{i,a}$
-    \EndFor
-    \If{$S = \text{greedy}$}
-        \State $i^* \leftarrow \arg\max_i \text{LLR}^{\text{StableESM}}_i$ where $\text{LLR}^{\text{StableESM}}_i \geq 0$
-    \ElsIf{$S = \text{sample}$}
-        \State $i^* \leftarrow \text{sample from } \{i : \text{LLR}^{\text{StableESM}}_i \geq 0\}$
-    \ElsIf{$S = \text{unique}$}
-        \State $i^* \leftarrow \text{sample from } \{i : \text{LLR}^{\text{StableESM}}_i \geq 0 \text{ and } \text{LLR}^{\text{ESM2}}_i < 0\}$
-    \EndIf
-    \State $a^* \leftarrow \arg\max_a \text{LLR}^{\text{StableESM}}_{i^*,a}$
-    \State $x_{current}[i^*] \leftarrow a^*$
-\EndFor
-\State \Return $x_{current}$
-\end{algorithmic}
-\end{algorithm}
+\KwIn{Wild-type sequence $x_{wt}$, StableESM model $\pi_\theta$, base ESM2 model $\pi_{ref}$, number of edits $N$, sampling strategy $S$}
+\KwOut{Designed protein sequence $x_{final}$}
+$x_{current} \leftarrow x_{wt}$\;
+\For{$round = 1$ \KwTo $N$}{
+    \For{$i = 1$ \KwTo $|x_{current}|$}{
+        Mask position $i$ in $x_{current}$ to get $x_{\setminus i}$\;
+        \For{each amino acid $a \neq x_{current}[i]$}{
+            $\text{LLR}^{\text{StableESM}}_{i,a} \leftarrow \log \frac{p_\theta(a \mid x_{\setminus i})}{p_\theta(x_{current}[i] \mid x_{\setminus i})}$\;
+            $\text{LLR}^{\text{ESM2}}_{i,a} \leftarrow \log \frac{p_{ref}(a \mid x_{\setminus i})}{p_{ref}(x_{current}[i] \mid x_{\setminus i})}$\;
+        }
+        $\text{LLR}^{\text{StableESM}}_i \leftarrow \max_a \text{LLR}^{\text{StableESM}}_{i,a}$\;
+        $\text{LLR}^{\text{ESM2}}_i \leftarrow \max_a \text{LLR}^{\text{ESM2}}_{i,a}$\;
+    }
+    \uIf{$S = \text{greedy}$}{
+        $i^* \leftarrow \arg\max_i \text{LLR}^{\text{StableESM}}_i$ where $\text{LLR}^{\text{StableESM}}_i \geq 0$\;
+    }
+    \uElseIf{$S = \text{sample}$}{
+        $i^* \leftarrow \text{sample from } \{i : \text{LLR}^{\text{StableESM}}_i \geq 0\}$\;
+    }
+    \uElseIf{$S = \text{unique}$}{
+        $i^* \leftarrow \text{sample from } \{i : \text{LLR}^{\text{StableESM}}_i \geq 0 \text{ and } \text{LLR}^{\text{ESM2}}_i < 0\}$\;
+    }
+    $a^* \leftarrow \arg\max_a \text{LLR}^{\text{StableESM}}_{i^*,a}$\;
+    $x_{current}[i^*] \leftarrow a^*$\;
+}
+\Return $x_{current}$\;
+\end{algorithm2e}
 
 
 \begin{figure}[h!]
