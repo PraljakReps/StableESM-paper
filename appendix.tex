@@ -304,7 +304,12 @@ To validate StableESM predictions, we experimentally tested designed mutations i
 
 For large-scale in silico design validation, we applied machine learning-directed evolution on multicopper oxidase (PDB: 1GSK), a 513 amino acid protein not represented in the preference alignment dataset. We evaluated three design strategies: (1) StableESM greedy sampling, selecting positions with highest predicted stabilizing effects; (2) StableESM unique sampling, targeting positions where StableESM predicts stabilizing mutations but ESM2 does not (LLR$_{\text{StableESM}} \geq 0$ and LLR$_{\text{ESM2}} < 0$); and (3) ESM2 greedy sampling as baseline. Thermal stability was evaluated using TempBERTura~\citep{rodella2024temberture}, and structural quality was assessed using ColabFold with mean pLDDT scores.
 
-\subsection{Predicting mutational effects with physics-based methods: Rosetta}\label{sec:rosetta_methods}
+% \subsection{Predicting mutational effects with physics-based methods: Rosetta}
+\subsection{Rosetta Relaxation and Cartesian $\Delta\Delta G$ Calculations}\label{sec:rosetta_methods}
+
+All structure refinement and mutation stability analyses were performed using Rosetta v3.12 (release-371) \citep{alford2017rosetta,leman2020macromolecular,fleishman2011rosettascripts,LEAVERFAY2011545}. Wild-type protein structures were first relaxed using the Rosetta fast relax protocol to remove local strain while maintaining overall backbone geometry. Harmonic coordinate constraints were applied to both backbone and side chains with a standard deviation of 0.5~\AA, and side-chain conformations were expanded to allow for local sampling of alternative rotamers. Five independent relaxation trajectories were generated for each structure, and the resulting structures were extracted as individual PDBs, with the lowest-energy sample used for point mutation stability prediction. \\
+
+Following relaxation, point mutation stability predictions were computed using the Rosetta Cartesian $\Delta\Delta G$ protocol as described by Park \textit{et al.}~\citep{park2018cartesian}. Each calculation was performed on the corresponding relaxed wild-type structure with mutations specified in Rosetta-formatted mutation files. The Cartesian minimization framework was employed with the \texttt{ref2015\_cart} scoring function, using three independent trajectories per mutation and a 9.0~\AA\ side-chain interaction cutoff. Final $\Delta\Delta G$ values were calculated as the difference between the average Rosetta total energies of mutant and wild-type models.
 
 \subsection{Experimental protocol for protein purification}\label{sec:protein_purification}
 
