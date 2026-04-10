@@ -37,7 +37,7 @@ The curated dataset comprises 1{,}154 unique protein domains spanning both MegaS
 The training set contains 184{,}938 unique stable mutants and 730{,}323 unique unstable mutants (915{,}261 total unique mutations), yielding 143{,}578{,}400 preference pairs.
 The validation set contains 21{,}679 stable and 82{,}306 unstable unique mutants (103{,}985 total), yielding 1{,}824{,}750 preference pairs.
 The out-of-distribution holdout from Human Domainome PF00018 and PF07525 families contains 421{,}641 preference pairs.
-Only single-point mutations were used for training; the complete dataset statistics and curation pipeline are summarized in Figure~\ref{fig:overview}c.
+Only single-point mutations were used for training; the complete dataset statistics and curation pipeline are summarized in Figure~\ref{fig:intro_stableESM}c.
 
 \subsection{Implementing StableESM: LoRA-based Direct Preference Optimization of ESM2}\label{sec:stableesm_implementation}
 
@@ -206,21 +206,98 @@ For each of the 190 proteins, we computed the Spearman rank correlation between 
 Performance was assessed by comparing the distributions of per-protein Spearman correlations between StableESM and ESM-2, using the Kolmogorov--Smirnov test for statistical significance and Cohen's $d$ for effect size.
 All five model sizes (8M, 35M, 150M, 650M, 3B) were evaluated.
 
-\subsection{Benchmarking StableESM on disorder region prediction}\label{sec:disorder_prediction}
-To evaluate whether stability-aligned representations transfer to unrelated protein properties, we benchmarked StableESM on per-residue disorder region prediction using the CAID (Critical Assessment of Intrinsic Disorder) benchmark. We trained on the DisProt training set and evaluated on CAID test proteins (584 proteins). For each backbone (StableESM, ESM2, ESM$_{Therm}$, one-hot encoding, and random initialization), we froze the backbone representations and trained a single linear layer ($\text{Linear}(d_{\text{hidden}}, 1)$) applied per residue to predict disorder probability. Training used binary cross-entropy loss with attention masking to ignore padding tokens, a learning rate of $1 \times 10^{-4}$, batch size of 32, maximum sequence length of 1024, and mixed precision (FP16) training for up to 1000 epochs. Performance was quantified using per-protein F1 score, accuracy, precision, and recall, aggregated across all CAID benchmark proteins.
+\subsection{Benchmarking StableESM on disorder region and solubility prediction}\label{sec:disorder_prediction}
 
-For solubility prediction, we used the same linear probing framework with mean pooling over per-residue representations to produce a single sequence-level prediction. Training used binary cross-entropy loss, a learning rate of $1 \times 10^{-4}$, batch size of 128, and the same maximum sequence length and precision settings. Performance was quantified using AUROC, F1 score, accuracy, precision, and recall on the held-out test set.
+To evaluate whether stability-aligned representations transfer to protein properties unrelated to the training objective, we benchmarked StableESM on two tasks: per-residue disorder region prediction and sequence-level solubility classification.
+Neither task was targeted during DPO training, so any improvements reflect more generally informative representations rather than task-specific memorization.
+Both tasks use a common linear probing framework that isolates representation quality by freezing all backbone parameters and training only a single linear layer.
+
+\paragraph{Linear probing framework.}
+For each backbone, we froze all parameters and trained a single linear layer ($\text{Linear}(d_{\text{hidden}}, 1)$) as the prediction head.
+The hidden dimension $d_{\text{hidden}}$ matches the backbone's representation size: 320 (8M), 480 (35M), 640 (150M), 1{,}280 (650M), and 2{,}560 (3B).
+For the one-hot baseline, input dimensionality is 33 (vocabulary size) for disorder and $1{,}024 \times 33 = 33{,}792$ (flattened) for solubility.
+All probes were trained using AdamW with learning rate $1 \times 10^{-4}$, weight decay $1 \times 10^{-4}$, binary cross-entropy loss, maximum sequence length of 1{,}024 tokens, and FP16 mixed precision for up to 1{,}000 epochs.
+Best models were selected by validation loss.
+
+\paragraph{Backbones compared.}
+We evaluated five backbones across model sizes: (1) StableESM (DPO-aligned policy model), (2) ESM-2 (unmodified pretrained baseline), (3) ESM$_{\text{Therm}}$ (supervised fine-tuning with stability predictor head), (4) one-hot encoding (minimal sequence baseline), and (5) randomly initialized ESM-2 weights (untrained control).
+This set of controls distinguishes improvements from learned representations versus trivial sequence features or model capacity effects.
+
+\subsubsection{Disorder region prediction}
+
+\paragraph{Datasets.}
+We trained on the DisProt training set and evaluated on the CAID (Critical Assessment of Intrinsic Disorder) benchmark test set comprising 584 proteins.
+Per-residue disorder labels were provided as binary annotations aligned to sequence positions.
+
+\paragraph{Architecture and training.}
+The linear head was applied per residue, producing a disorder probability at each position.
+Binary cross-entropy loss was computed with attention masking to exclude padding tokens from the loss and metric computation.
+Training used a batch size of 32.
+
+\paragraph{Metrics.}
+Performance was quantified using per-protein F1 score, accuracy, precision, and recall, computed over active (non-padding) residues only and aggregated across all 584 CAID benchmark proteins.
+
+\subsubsection{Solubility prediction}
+
+\paragraph{Dataset.}
+We used a binary solubility classification dataset with predefined train, validation, and test splits.
+Each protein was labeled as soluble or insoluble.
+Sequences longer than 1{,}022 amino acids were excluded to fit within the 1{,}024-token limit (accounting for \texttt{<cls>} and \texttt{<eos>} tokens).
+
+\paragraph{Architecture and training.}
+The linear head was applied to a mean-pooled representation over all non-padding tokens, producing a single sequence-level prediction.
+Training used a batch size of 128.
+
+\paragraph{Metrics.}
+Performance was quantified using AUROC, F1 score, accuracy, precision, and recall on the held-out test set.
 
 \subsection{Testing catastrophic forgetting on structure prediction}\label{sec:structure_forgetting}
-To assess whether StableESM exhibits catastrophic forgetting of structural information relative to ESM, we evaluated its learned representations using the structure module of ESMFold. Specifically, embeddings and attention maps extracted from StableESM were passed directly into the ESMFold structure module trained for 270k update steps, following the evaluation protocol used in the original ESMFold study. We evaluated models with 8M, 35M, 150M, 650M, and 3B parameters. For each model size, embeddings and attention tensors were extracted consistently with the representations used in the original ESMFold. These representations were provided as input to the ESMFold structure module, which was kept frozen throughout all experiments. No recycling steps were performed during structure prediction. Structural predictions were generated for protein targets from the CAMEO, CASP14, CASP15, and CASP16 benchmark datasets. Model performance was quantified using average per sequence pLDDT scores. 
 
-To compare StableESM against conventional finetuning with a task-specific predictor head, we additionally evaluated representations from ESMTherm models. ESMTherm models were trained using the original ESMTherm training code and datasets and employ supervised finetuning with an explicit stability predictor head. We evaluated ESMTherm models with matching parameter sizes and extracted embeddings and attention tensors from the same attentions and representations as done for ESM and StableESM. This enabled a controlled comparison of how DPO-based optimization versus predictor head finetuning affects retention of structural signal in learned representations.
+To assess whether StableESM retains the structural knowledge encoded during pretraining, we evaluated its representations using the structure module of ESMFold~\citep{lin2023evolutionary}.
+Embeddings and attention maps from StableESM were passed directly into the ESMFold structure module (trained for 270k update steps), following the evaluation protocol from the original ESMFold study.
+The structure module was kept frozen throughout all experiments and no recycling steps were performed during prediction.
+
+We evaluated models at 8M, 35M, 150M, 650M, and 3B parameters.
+For each model size, embeddings and attention tensors were extracted from the same layers and attention heads as in the original ESMFold implementation.
+Structural predictions were generated for protein targets from the CAMEO, CASP14, CASP15, and CASP16 benchmark datasets~\citep{yuan2025casp16}.
+Performance was quantified using the average per-sequence pLDDT score.
+
+To compare against conventional fine-tuning, we additionally evaluated representations from ESM$_{\text{Therm}}$ models~\citep{chu2024protein}.
+ESM$_{\text{Therm}}$ models were trained with supervised fine-tuning using a regression head on stability data and the original ESM$_{\text{Therm}}$ training code and datasets.
+We evaluated ESM$_{\text{Therm}}$ at matching parameter sizes, extracting embeddings and attention tensors from the same layers as for ESM-2 and StableESM.
+This enables a controlled comparison of how DPO-based alignment versus supervised fine-tuning affects retention of structural signal.
 
 \subsection{Testing catastrophic forgetting on clinical variant prediction}\label{sec:clinical_forgetting}
-\subsection{Testing catastrophic forgetting on ProteinGym benchmarks}\label{sec:proteingym_forgetting}
-To further assess catastrophic forgetting in a functional prediction setting, we benchmarked StableESM representations on protein fitness prediction using the ProteinGym benchmark. Following the methodology introduced in ESM, fitness scores were computed using a log-likelihood ratio (LLR)–based metric derived from masked language modeling probabilities.
 
-We evaluated ESM, StableESM, and ESMTherm models with 8M, 35M, 150M, 650M, and 3B parameters. For each model, predicted fitness scores were compared against experimentally measured fitness values across ProteinGym protein mutant datasets. Performance was quantified using Spearman’s rank correlation coefficient (ρ), computed separately for each dataset.
+To evaluate whether stability alignment compromises pathogenicity prediction, we benchmarked StableESM on the ProteinGym clinical variant benchmark~\citep{notin2023proteingym}, which contains curated ClinVar pathogenic and benign substitutions across human proteins.
+
+\paragraph{Scoring.}
+Variants were scored using the same zero-shot LLR approach as for mutation effect prediction (Equation~\ref{eq:llr_inference}).
+For each protein, pathogenic variants are expected to have negative LLR scores (predicted destabilizing or deleterious) and benign variants positive or near-zero scores.
+
+\paragraph{Evaluation.}
+We evaluated ESM-2, StableESM, and ESM$_{\text{Therm}}$ at 8M, 35M, 150M, 650M, and 3B parameters.
+Performance was quantified per protein using AUC (area under the ROC curve for discriminating pathogenic from benign variants) and F1 score.
+Aggregate performance was computed as the average across all proteins in the benchmark.
+We additionally compared against TransceptEVE-L as an external state-of-the-art baseline.
+
+\paragraph{Per-protein analysis.}
+Beyond aggregate metrics, we examined the per-protein F1 score distribution by comparing StableESM against ESM-2 on a scatter plot.
+This analysis reveals whether stability alignment uniformly preserves clinical prediction or differentially affects specific proteins---for instance, proteins where pathogenicity is driven by destabilization may benefit from stability alignment, while proteins with gain-of-function disease mechanisms may not.
+
+\subsection{Testing catastrophic forgetting on ProteinGym benchmarks}\label{sec:proteingym_forgetting}
+
+To assess whether preference alignment preserves general fitness prediction capabilities, we benchmarked StableESM on the ProteinGym substitution benchmark~\citep{notin2023proteingym}, which spans five functional categories: fitness, activity, binding, expression, and stability.
+
+\paragraph{Scoring.}
+Fitness scores were computed using the zero-shot LLR approach (Equation~\ref{eq:llr_inference}) for StableESM and the standard masked marginal LLR from \citet{meier2021language} for ESM-2.
+For ESM$_{\text{Therm}}$, we evaluated both the supervised regression head (on stability only) and the LLR-based zero-shot approach to isolate representation quality from task-specific head performance.
+
+\paragraph{Evaluation.}
+We evaluated ESM-2, StableESM, and ESM$_{\text{Therm}}$ at 8M, 35M, 150M, 650M, and 3B parameters.
+For each model, predicted scores were compared against experimentally measured fitness values across all ProteinGym deep mutational scanning datasets within each category.
+Performance was quantified using Spearman’s rank correlation ($\rho$), computed per dataset and averaged within each functional category.
+Results were compared against state-of-the-art models reported on the ProteinGym leaderboard.
 
 \subsection{Designing multicopper oxidase alleles and variants with StableESM}\label{sec:oxidase_design}
 To validate StableESM predictions, we experimentally tested designed mutations in laccase (CotA) from \textit{Bacillus subtilis} (UniProtKB accession P07788), a protein family not represented in the preference alignment dataset. We selected mutations based on StableESM predictions using the machine learning-directed evolution framework described in Algorithm~\ref{alg:ml_directed_evolution}, including overlap variants where both StableESM and ESM2 predict stabilizing effects and StableESM-specific predictions. Enzyme activity was assessed through ABTS oxidation assays at multiple temperatures (25$^\circ$C, 65$^\circ$C, and 85$^\circ$C). All experiments were performed in quadruplicate.
