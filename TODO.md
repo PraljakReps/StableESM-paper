@@ -24,8 +24,12 @@
 ## Rosetta Benchmarking
 
 - [ ] **Main text**: add Rosetta $\Delta\Delta G$ calculations as a physics-based baseline comparison (e.g., against StableESM LLR predictions on FireProt/MegaScale benchmarks)
-- [ ] **Appendix methods** (`appendix.tex`): `\subsection{Predicting mutational effects with physics-based methods: Rosetta}` — currently empty, needs protocol details (Rosetta version, scoring function, relaxation protocol, cartesian_ddg vs row3 etc.)
-- [ ] **Results**: compare Rosetta $\Delta\Delta G$ correlations vs StableESM LLR vs ESM2 LLR across OOD benchmarks; position StableESM relative to both ML and physics-based methods
+- [ ] **Appendix methods** (`appendix.tex` ~line 308, `\subsection{Rosetta Relaxation and Cartesian $\Delta\Delta G$ Calculations}`, `\label{sec:rosetta_methods}`) — subsection already exists and documents FastRelax + `ref2015_cart` + `cartesian_ddg` protocol, **but does not describe how WT structures are acquired**. Extend it to cover:
+  - **WT structure sourcing**: when a deposited PDB matches the experimental construct exactly, relax the PDB directly; when the PDB is unavailable **or the deposited crystal construct differs from the UniProt canonical sequence** (see `PraljakReps/StableESM` issue #1 — e.g., Q9UV68 / 3WP4 has 7 residues that differ from UniProt), build the "experimental construct" sequence by patching UniProt with the PDB SEQRES variants and predict its structure with ColabFold.
+  - **ColabFold protocol**: AlphaFold2 weights via ColabFold, **template mode enabled** (homologous crystal passed as custom template so the prediction is anchored to the experimentally characterized fold — e.g., 3WP4 for Q9UV68), **full MSA via MMseqs2** (ColabFold default, not single-sequence), top-ranked model relaxed with **Amber** before it enters the Rosetta FastRelax step.
+  - **Rationale**: LLR is masked-marginal and so is invariant to the WT-label mismatch, but Rosetta $\Delta\Delta G = G(\text{mut}) - G(\text{wt})$ is not — the construct-aware WT structure is required for physically meaningful ΔΔG.
+  - **Scope note**: applied across the entire FireProt long-sequence OOD holdout ($254 < L \leq 1022$), not only the proteins flagged by the consistency sweep.
+- [ ] **Results**: compare Rosetta $\Delta\Delta G$ correlations vs StableESM LLR vs ESM2 LLR across OOD benchmarks; position StableESM relative to both ML and physics-based methods. Include a note that LLR and Rosetta report complementary quantities (LLR ↔ masked log-likelihood, Rosetta ↔ folding free energy) and neither directly measures $\Delta T_m$.
 
 ## Figures to Create
 
@@ -36,7 +40,7 @@
 
 ## Appendix Methods Still Empty
 
-- [ ] `\subsection{Predicting mutational effects with physics-based methods: Rosetta}` — Rosetta protocol
+- _(none — the Rosetta subsection exists at `appendix.tex:308` as `\subsection{Rosetta Relaxation and Cartesian $\Delta\Delta G$ Calculations}`; pending edits are tracked under "Rosetta Benchmarking" above.)_
 
 ## Appendix Methods Complete
 
